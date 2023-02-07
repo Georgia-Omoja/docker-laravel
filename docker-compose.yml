@@ -1,0 +1,35 @@
+version: '3'
+services:
+  web:
+    image: httpd:alpine
+    ports:
+      - 80:80
+    volumes:
+      - ./:/var/www/html/georgialaravel
+      - ./logs:/var/logs/apache2
+    depends_on:
+      - app
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www/html/georgialaravel
+    ports:
+      - 9000:9000
+    depends_on:
+      - db
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: georgia
+      MYSQL_PASSWORD: laravel
+    ports:
+      - 3306:3306
+    volumes:
+      - db-data:/var/lib/mysql
+volumes:
+  db-data:
+
