@@ -1,35 +1,50 @@
 version: '3'
 services:
-  web:
-    image: httpd:alpine
-    ports:
-      - 80:80
-    volumes:
-      - ./:/var/www/html/georgialaravel
-      - ./logs:/var/logs/apache2
-    depends_on:
-      - app
   app:
     build:
-      context: .
+      args:
+        user: georgia
+        uid: 1000
+      context: ./
       dockerfile: Dockerfile
+    image: laravel-app
+    container_name: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www/html/georgialaravel
     volumes:
       - ./:/var/www/html/georgialaravel
-    ports:
-      - 9000:9000
-    depends_on:
-      - db
+    networks:
+      - laravel-network
+
   db:
-    image: mysql:8
+    image: mysql:8.0
+    container_name: laravel-db
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: laravel
-      MYSQL_USER: georgia
-      MYSQL_PASSWORD: laravel
-    ports:
-      - 3306:3306
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
     volumes:
-      - db-data:/var/lib/mysql
-volumes:
-  db-data:
+      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - laravel-network
+
+  web:
+    image: nginx:alpine
+    container_name: ;aravel-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - laravel-network
+
+networks:
+  laravel-network:
+    driver: bridge
 
